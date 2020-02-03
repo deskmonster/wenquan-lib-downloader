@@ -2,177 +2,185 @@ from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
 import re
+import jwt
 import os
 import json
 import time
 import requests
+from retrying import retry
 
 '''作者觉得还能抢救一下.'''
 
 headers = {}
 cookies = []
-attempt = 0
+base_url = 'https://lib-nuanxin.wqxuetang.com/read/pdf/'
+jwt_secret = "g0NnWdSE8qEjdMD8a1aq12qEYphwErKctvfd3IktWHWiOBpVsgkecur38aBRPn2w"
+
+# def init():
+#     global headers, cookies
+#     headers = {'referer': 'https://lib-nuanxin.wqxuetang.com/read/pdf/3209350',
+#                'sec-fetch-mode': 'no-cors',
+#                'sec-fetch-site': 'same-origin',
+#                'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36'}
+#     cookies = [
+#         {
+#             "domain": ".wqxuetang.com",
+#             "expirationDate": 2202632891.458739,
+#             "hostOnly": False,
+#             "httpOnly": False,
+#             "name": "_gid",
+#             "path": "/",
+#             "sameSite": "unspecified",
+#             "secure": False,
+#             "session": False,
+#             "storeId": "0",
+#             "value": "355981004881",
+#             "id": 1
+#         },
+#         {
+#             "domain": ".wqxuetang.com",
+#             "expirationDate": 2202632891.458763,
+#             "hostOnly": False,
+#             "httpOnly": False,
+#             "name": "_gidv",
+#             "path": "/",
+#             "sameSite": "unspecified",
+#             "secure": False,
+#             "session": False,
+#             "storeId": "0",
+#             "value": "546263cba4f3167ea71eb410d88fd72f",
+#             "id": 2
+#         },
+#         {
+#             "domain": ".wqxuetang.com",
+#             "hostOnly": False,
+#             "httpOnly": False,
+#             "name": "Hm_lpvt_a84b27ffd87daa3273555205ef60df89",
+#             "path": "/",
+#             "sameSite": "unspecified",
+#             "secure": False,
+#             "session": True,
+#             "storeId": "0",
+#             "value": "1580552936",
+#             "id": 3
+#         },
+#         {
+#             "domain": ".wqxuetang.com",
+#             "expirationDate": 1612088936,
+#             "hostOnly": False,
+#             "httpOnly": False,
+#             "name": "Hm_lvt_a84b27ffd87daa3273555205ef60df89",
+#             "path": "/",
+#             "sameSite": "unspecified",
+#             "secure": False,
+#             "session": False,
+#             "storeId": "0",
+#             "value": "1580521546,1580529669,1580552891,1580552936",
+#             "id": 4
+#         },
+#         {
+#             "domain": ".wqxuetang.com",
+#             "hostOnly": False,
+#             "httpOnly": False,
+#             "name": "PHPSESSID",
+#             "path": "/",
+#             "sameSite": "unspecified",
+#             "secure": False,
+#             "session": True,
+#             "storeId": "0",
+#             "value": "q7kcc7usslg9tm62vmkbrjv8us",
+#             "id": 5
+#         }
+#     ]
 
 
-def init():
-    global headers, cookies
-    headers = {'referer': 'https://lib-nuanxin.wqxuetang.com/read/pdf/3209350',
-               'sec-fetch-mode': 'no-cors',
-               'sec-fetch-site': 'same-origin',
-               'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36'}
-    cookies = [
-        {
-            "domain": ".wqxuetang.com",
-            "expirationDate": 2202632891.458739,
-            "hostOnly": False,
-            "httpOnly": False,
-            "name": "_gid",
-            "path": "/",
-            "sameSite": "unspecified",
-            "secure": False,
-            "session": False,
-            "storeId": "0",
-            "value": "355981004881",
-            "id": 1
-        },
-        {
-            "domain": ".wqxuetang.com",
-            "expirationDate": 2202632891.458763,
-            "hostOnly": False,
-            "httpOnly": False,
-            "name": "_gidv",
-            "path": "/",
-            "sameSite": "unspecified",
-            "secure": False,
-            "session": False,
-            "storeId": "0",
-            "value": "546263cba4f3167ea71eb410d88fd72f",
-            "id": 2
-        },
-        {
-            "domain": ".wqxuetang.com",
-            "hostOnly": False,
-            "httpOnly": False,
-            "name": "Hm_lpvt_a84b27ffd87daa3273555205ef60df89",
-            "path": "/",
-            "sameSite": "unspecified",
-            "secure": False,
-            "session": True,
-            "storeId": "0",
-            "value": "1580552936",
-            "id": 3
-        },
-        {
-            "domain": ".wqxuetang.com",
-            "expirationDate": 1612088936,
-            "hostOnly": False,
-            "httpOnly": False,
-            "name": "Hm_lvt_a84b27ffd87daa3273555205ef60df89",
-            "path": "/",
-            "sameSite": "unspecified",
-            "secure": False,
-            "session": False,
-            "storeId": "0",
-            "value": "1580521546,1580529669,1580552891,1580552936",
-            "id": 4
-        },
-        {
-            "domain": ".wqxuetang.com",
-            "hostOnly": False,
-            "httpOnly": False,
-            "name": "PHPSESSID",
-            "path": "/",
-            "sameSite": "unspecified",
-            "secure": False,
-            "session": True,
-            "storeId": "0",
-            "value": "q7kcc7usslg9tm62vmkbrjv8us",
-            "id": 5
-        }
-    ]
+# def set_up_chrome():
+#     global chrome
+#     options = webdriver.ChromeOptions()
+#     prefs = {
+#         'profile.default_content_setting_values': {
+#             'images': 2,
+#             'javascript': 2  # 2即为禁用的意思
+#         }
+#     }
+#     options.add_argument('--no-sandbox')
+#     options.add_argument('--headless')  # 无头参数
+#     options.add_argument('--disable-gpu')
+#     options.add_experimental_option('prefs', prefs)
+#     chrome = webdriver.Chrome(options=options)
+#     chrome.implicitly_wait(20)
+@retry()
+def json_call(book_id):
+    url = 'https://lib-nuanxin.wqxuetang.com/v1/read/k?bid=' + book_id
+    r = requests.Session().get(url, headers={
+        'referer': url,
+        'sec-fetch-mode': 'cors',
+        'sec-fetch-site': 'same-origin',
+        'user': 'bapkg/com.bookask.wqxuetang baver/1.1.1',
+    })
+    r.raise_for_status()
+    result = r.json()
+    print(result)
+    return result['data']
 
 
-def set_up_chrome():
-    global chrome
-    options = webdriver.ChromeOptions()
-    prefs = {
-        'profile.default_content_setting_values': {
-            'images': 2,
-            'javascript': 2  # 2即为禁用的意思
-        }
-    }
-    options.add_argument('--no-sandbox')
-    options.add_argument('--headless')  # 无头参数
-    options.add_argument('--disable-gpu')
-    options.add_experimental_option('prefs', prefs)
-    chrome = webdriver.Chrome(options=options)
-    chrome.implicitly_wait(20)
-
-
-def get_img(urls, title):
-    attempts = 0
-    os.makedirs(title, exist_ok=True)
-    headers['referer'] = urls
-    chrome.get(urls)
-    # for i in cookies:
-    #     chrome.add_cookie(i)
-    # time.sleep(10)
-    ratio = chrome.find_element_by_class_name('page-head-tol').text
-    length = re.sub(r'.*/ ', "", ratio)
-    print('This book has {length} pages'.format(length=length))
-    length = int(length) + 1
-    for num in range(1, length):
-        while attempts <= 10:
+def get_img(book_id, title, pages):
+    jwtkey = json_call(book_id)
+    attempt = 0
+    for page in range(1, int(pages)+1):
+        while attempt <= 5:
             try:
-                res = chrome.find_element_by_css_selector('.page-img-box[index="{ind}"] > img'.format(ind=num))
-                src = res.get_attribute('src')
-                print(src)
-                img = requests.get(src, headers=headers, timeout=30)
-                with open(os.path.join(title, os.path.basename('{num}.jpg'.format(num=str(num)))), 'wb') as file:
+                cur_time = time.time()
+                jwttoken = jwt.encode({
+                    "p": page,
+                    "t": int(cur_time * 1000),
+                    "b": str(book_id),
+                    "w": 1000,
+                    "k": json.dumps(jwtkey),
+                    "iat": int(cur_time)
+                }, jwt_secret, algorithm='HS256').decode('ascii')
+                img = requests.Session().get('https://lib-nuanxin.wqxuetang.com/page/img/%s/%s?k=%s' % (
+                        book_id, page, jwttoken), headers={
+                        'referer': base_url+book_id,
+                        'sec-fetch-mode': 'no-cors',
+                        'sec-fetch-site': 'same-origin',
+                    },timeout=30)
+                img.raise_for_status()
+                with open(os.path.join(title, os.path.basename('{num}.jpg'.format(num=str(page)))), 'wb') as file:
                     for chunk in img.iter_content(100000):
                         file.write(chunk)
             except:
-                print('error for downloading,try again')
-                attempts += 1
-                if attempts == 11:
-                    with open('download.log', 'w') as lgs:
-                        lgs.writelines('{} of {} is wrong'.format(str(num), title))
-                chrome.refresh()
-                button = chrome.find_element_by_id('input')
-                button.send_keys(Keys.CONTROL, 'a')
-                button.send_keys(num)
-                ActionChains(chrome).move_by_offset(0, 0).click().perform()
-                time.sleep(5)
+                print('{} is error,retrying'.format(str(page)))
+                time.sleep(4)
+                jwtkey = json_call(book_id, 'https://lib-nuanxin.wqxuetang.com/v1/read/k?bid=')
+                attempt += 1
+                if attempt == 6:
+                    with open('download.log', 'a') as lgs:
+                        lgs.write('{} of {} is wrong\n'.format(str(page), title))
+
             else:
-                attempts = 0
-                print('{num} is downloaded'.format(num=str(num)))
+                attempt = 0
                 break
-        num += 1
-        button = chrome.find_element_by_id('input')
-        button.send_keys(Keys.CONTROL, 'a')
-        button.send_keys(num)
-        ActionChains(chrome).move_by_offset(0, 0).click().perform()
-        time.sleep(3)
-    print('done')
-    return length
 
 
-init()
-set_up_chrome()
-with open('title_list.json') as tl:
-    title_list = json.load(tl)
-with open('url_list.json') as ul:
-    url_list = json.load(ul)
-for u, t in zip(url_list, title_list):
-    while attempt <= 10:
+@retry(stop_max_attempt_number=5)
+def starter(title, book_id, pages):
+    os.makedirs(title, exist_ok=True)
+    get_img(book_id, title, pages)
+
+
+if __name__ == '__main__':
+    with open('title_list.json') as ti:
+        title_list = json.load(ti)
+    with open('id_list.json') as bi:
+        id_list = json.load(bi)
+    with open('page_list.json') as pg:
+        page_list = json.load(pg)
+    for t, i, p in zip(title_list, id_list, page_list):
         try:
-            get_img(u, t)
+            starter(t, i, p)
         except:
-            with open('book.log', 'a') as logs:
-                logs.write('{} is wrong.\n'.format(t))
-            print('error for getting url,retrying')
-            attempt += 1
-            time.sleep(30)
-        else:
-            attempt = 0
-            break
+            print('{} is wrong'.format(t))
+            with open('book.log', 'a') as lgs:
+                lgs.write('{} is wrong.\n'.format(t))
+            continue
