@@ -1,7 +1,3 @@
-from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.action_chains import ActionChains
-import re
 import jwt
 import os
 import json
@@ -21,99 +17,6 @@ cookies = []
 base_url = 'https://lib-nuanxin.wqxuetang.com/read/pdf/'
 jwt_secret = "g0NnWdSE8qEjdMD8a1aq12qEYphwErKctvfd3IktWHWiOBpVsgkecur38aBRPn2w"
 
-# def init():
-#     global headers, cookies
-#     headers = {'referer': 'https://lib-nuanxin.wqxuetang.com/read/pdf/3209350',
-#                'sec-fetch-mode': 'no-cors',
-#                'sec-fetch-site': 'same-origin',
-#                'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36'}
-#     cookies = [
-#         {
-#             "domain": ".wqxuetang.com",
-#             "expirationDate": 2202632891.458739,
-#             "hostOnly": False,
-#             "httpOnly": False,
-#             "name": "_gid",
-#             "path": "/",
-#             "sameSite": "unspecified",
-#             "secure": False,
-#             "session": False,
-#             "storeId": "0",
-#             "value": "355981004881",
-#             "id": 1
-#         },
-#         {
-#             "domain": ".wqxuetang.com",
-#             "expirationDate": 2202632891.458763,
-#             "hostOnly": False,
-#             "httpOnly": False,
-#             "name": "_gidv",
-#             "path": "/",
-#             "sameSite": "unspecified",
-#             "secure": False,
-#             "session": False,
-#             "storeId": "0",
-#             "value": "546263cba4f3167ea71eb410d88fd72f",
-#             "id": 2
-#         },
-#         {
-#             "domain": ".wqxuetang.com",
-#             "hostOnly": False,
-#             "httpOnly": False,
-#             "name": "Hm_lpvt_a84b27ffd87daa3273555205ef60df89",
-#             "path": "/",
-#             "sameSite": "unspecified",
-#             "secure": False,
-#             "session": True,
-#             "storeId": "0",
-#             "value": "1580552936",
-#             "id": 3
-#         },
-#         {
-#             "domain": ".wqxuetang.com",
-#             "expirationDate": 1612088936,
-#             "hostOnly": False,
-#             "httpOnly": False,
-#             "name": "Hm_lvt_a84b27ffd87daa3273555205ef60df89",
-#             "path": "/",
-#             "sameSite": "unspecified",
-#             "secure": False,
-#             "session": False,
-#             "storeId": "0",
-#             "value": "1580521546,1580529669,1580552891,1580552936",
-#             "id": 4
-#         },
-#         {
-#             "domain": ".wqxuetang.com",
-#             "hostOnly": False,
-#             "httpOnly": False,
-#             "name": "PHPSESSID",
-#             "path": "/",
-#             "sameSite": "unspecified",
-#             "secure": False,
-#             "session": True,
-#             "storeId": "0",
-#             "value": "q7kcc7usslg9tm62vmkbrjv8us",
-#             "id": 5
-#         }
-#     ]
-
-
-# def set_up_chrome():
-#     global chrome
-#     options = webdriver.ChromeOptions()
-#     prefs = {
-#         'profile.default_content_setting_values': {
-#             'images': 2,
-#             'javascript': 2  # 2即为禁用的意思
-#         }
-#     }
-#     options.add_argument('--no-sandbox')
-#     options.add_argument('--headless')  # 无头参数
-#     options.add_argument('--disable-gpu')
-#     options.add_experimental_option('prefs', prefs)
-#     chrome = webdriver.Chrome(options=options)
-#     chrome.implicitly_wait(20)
 
 @retry()
 def json_call(book_id):
