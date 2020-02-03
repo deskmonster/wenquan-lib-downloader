@@ -11,7 +11,12 @@ from retrying import retry
 
 '''作者觉得还能抢救一下.'''
 
-headers = {}
+HEADERS = {
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+    "Accept-Encoding": "gzip, deflate",
+    "Accept-Language": "zh-CN,zh;q=0.8,en;q=0.6",
+    "User-Agent": "Mozilla/5.0 (Windows NT 6.1; rv:60.0) Gecko/20100101 Firefox/60.0",
+}
 cookies = []
 base_url = 'https://lib-nuanxin.wqxuetang.com/read/pdf/'
 jwt_secret = "g0NnWdSE8qEjdMD8a1aq12qEYphwErKctvfd3IktWHWiOBpVsgkecur38aBRPn2w"
@@ -109,10 +114,13 @@ jwt_secret = "g0NnWdSE8qEjdMD8a1aq12qEYphwErKctvfd3IktWHWiOBpVsgkecur38aBRPn2w"
 #     options.add_experimental_option('prefs', prefs)
 #     chrome = webdriver.Chrome(options=options)
 #     chrome.implicitly_wait(20)
+
 @retry()
 def json_call(book_id):
     url = 'https://lib-nuanxin.wqxuetang.com/v1/read/k?bid=' + book_id
-    r = requests.Session().get(url, headers={
+    r = requests.Session()
+    r.headers.update(HEADERS)
+    r = r.get(url, headers={
         'referer': url,
         'sec-fetch-mode': 'cors',
         'sec-fetch-site': 'same-origin',
@@ -139,7 +147,8 @@ def get_img(book_id, title, pages):
                     "k": json.dumps(jwtkey),
                     "iat": int(cur_time)
                 }, jwt_secret, algorithm='HS256').decode('ascii')
-                img = requests.Session().get('https://lib-nuanxin.wqxuetang.com/page/img/%s/%s?k=%s' % (
+                img = requests.Session()
+                img = img.get('https://lib-nuanxin.wqxuetang.com/page/img/%s/%s?k=%s' % (
                         book_id, page, jwttoken), headers={
                         'referer': base_url+book_id,
                         'sec-fetch-mode': 'no-cors',
@@ -154,13 +163,14 @@ def get_img(book_id, title, pages):
             except:
                 print('{} is error,retrying'.format(str(page)))
                 time.sleep(4)
-                jwtkey = json_call(book_id, 'https://lib-nuanxin.wqxuetang.com/v1/read/k?bid=')
+                jwtkey = json_call(book_id,)
                 attempt += 1
                 if attempt == 6:
                     with open('download.log', 'a') as lgs:
                         lgs.write('{} of {} is wrong\n'.format(str(page), title))
 
             else:
+                print('{} is downloaded'.format(page))
                 attempt = 0
                 break
 
