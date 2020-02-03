@@ -146,6 +146,8 @@ def get_img(book_id, title, pages):
                         'sec-fetch-site': 'same-origin',
                     },timeout=30)
                 img.raise_for_status()
+                if img.headers.get('pragma') != 'catch':
+                    raise Exception('Try again')
                 with open(os.path.join(title, os.path.basename('{num}.jpg'.format(num=str(page)))), 'wb') as file:
                     for chunk in img.iter_content(100000):
                         file.write(chunk)
@@ -181,6 +183,6 @@ if __name__ == '__main__':
             starter(t, i, p)
         except:
             print('{} is wrong'.format(t))
-            with open('book.log', 'a') as lgs:
-                lgs.write('{} is wrong.\n'.format(t))
+            with open('book.log', 'a') as logs:
+                logs.write('{} is wrong.\n'.format(t))
             continue
