@@ -181,6 +181,7 @@ if __name__ == '__main__':
     for t, i, p in zip(title_list, id_list, page_list):
         try:
             starter(t, i, p)
+            print('{} is downloaded'.format(t))
         except:
             print('{} is wrong'.format(t))
             with open('book.log', 'a') as logs:
